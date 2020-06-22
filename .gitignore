@@ -1,0 +1,7 @@
+/.vscode/
+/bin/
+/hostcs/bin/
+/hostcs/obj/
+/hostcs/*.csproj
+/lua-*/
+

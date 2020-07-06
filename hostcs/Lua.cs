@@ -44,12 +44,14 @@ namespace hostcs
         [DllImport("lua")] extern public static int lua_absindex(IntPtr L, int idx);
         [DllImport("lua")] extern public static void lua_arith(IntPtr L, int op);
         [DllImport("lua")] extern public static lua_CFunction lua_atpanic(IntPtr L, lua_CFunction panicf);
-
+        /// <summary>
+        /// 调用栈顶级处的函数   
+        /// [-(nargs+1), +nresults, e]
+        /// </summary>
         public static void lua_call(IntPtr L, int nargs, int nresults)
         {
             lua_callk(L, nargs, nresults, IntPtr.Zero, null);
         }
-
         [DllImport("lua")] extern public static void lua_callk(IntPtr L, int nargs, int nresults, /* lua_KContext */IntPtr ctx, lua_KFunction k);
         [DllImport("lua")] extern public static int lua_checkstack(IntPtr L, int n);
         [DllImport("lua")] extern public static void lua_close(IntPtr L);
@@ -62,7 +64,15 @@ namespace hostcs
         [DllImport("lua")] extern public static int lua_gc(IntPtr L, int what, int data);
         [DllImport("lua")] extern public static lua_Alloc lua_getallocf(IntPtr L, /* void** */IntPtr ud);
         // TODO lua_getextraspace
+        /// <summary>
+        /// 把栈中指定位置处的值的指定字段压入栈, 返回被压入的值的类型   
+        /// [-0, +1, e]
+        /// </summary>
         [DllImport("lua")] extern public static int lua_getfield(IntPtr L, int idx, /* const char* */string k);
+        /// <summary>
+        /// 把指定全局变量压入栈, 返回被压入的值的类型   
+        /// [-0, +1, e]
+        /// </summary>
         [DllImport("lua")] extern public static int lua_getglobal(IntPtr L, /* const char* */string name);
         [DllImport("lua")] extern public static lua_Hook lua_gethook(IntPtr L);
         [DllImport("lua")] extern public static int lua_gethookcount(IntPtr L);
@@ -73,6 +83,10 @@ namespace hostcs
         [DllImport("lua")] extern public static int lua_getmetatable(IntPtr L, int objindex);
         [DllImport("lua")] extern public static int lua_getstack(IntPtr L, int level, /* const lua_Debug* */IntPtr ar);
         [DllImport("lua")] extern public static int lua_gettable(IntPtr L, int idx);
+        /// <summary>
+        /// 返回栈顶索引, 因为有效索引从1开始, 此值也就是栈的长度, 0=空栈   
+        /// [-0, +0, -]
+        /// </summary>
         [DllImport("lua")] extern public static int lua_gettop(IntPtr L);
         [DllImport("lua")] extern public static IntPtr lua_getupvalue(IntPtr L, int funcindex, int n); // const char*
         [DllImport("lua")] extern public static int lua_getuservalue(IntPtr L, int idx);
@@ -230,6 +244,10 @@ namespace hostcs
             lua_setglobal(L, name);
         }
 
+        /// <summary>
+        /// 删除栈中指定位置处的值   
+        /// [-1, +0, -]
+        /// </summary>
         public static void lua_remove(IntPtr L, int idx)
         {
             lua_rotate(L, idx, -1);
@@ -246,47 +264,118 @@ namespace hostcs
         [DllImport("lua")] extern public static void lua_rotate(IntPtr L, int idx, int n);
         [DllImport("lua")] extern public static void lua_setallocf(IntPtr L, lua_Alloc f, /* void* */IntPtr ud);
         [DllImport("lua")] extern public static void lua_setfield(IntPtr L, int idx, /* const char* */string k);
+        /// <summary>
+        /// 从栈弹出值并指定为全局变量   
+        /// [-1, +0, e]
+        /// </summary>
         [DllImport("lua")] extern public static void lua_setglobal(IntPtr L, /* const char* */string name);
         [DllImport("lua")] extern public static void lua_sethook(IntPtr L, lua_Hook func, int mask, int count);
         [DllImport("lua")] extern public static void lua_seti(IntPtr L, int idx, /* lua_Integer */long n);
         [DllImport("lua")] extern public static IntPtr lua_setlocal(IntPtr L, /* const lua_Debug* */IntPtr ar, int n); // const char*
         [DllImport("lua")] extern public static int lua_setmetatable(IntPtr L, int objindex);
         [DllImport("lua")] extern public static void lua_settable(IntPtr L, int idx);
+        /// <summary>
+        /// 重新指定栈顶, 0=清空栈   
+        /// [-?, +?, -]
+        /// </summary>
         [DllImport("lua")] extern public static void lua_settop(IntPtr L, int idx);
         [DllImport("lua")] extern public static IntPtr lua_setupvalue(IntPtr L, int funcindex, int n); // const char*
         [DllImport("lua")] extern public static void lua_setuservalue(IntPtr L, int idx);
         [DllImport("lua")] extern public static int lua_status(IntPtr L);
         [DllImport("lua")] extern public static ulong lua_stringtonumber(IntPtr L, /* const char* */string s);// size_t
+        /// <summary>
+        /// 把栈中指定索引处的值转换为布尔值, _false_ 与 _nil_ 以外的值都为 _true_   
+        /// [-0, +0, -]
+        /// </summary>
         [DllImport("lua")] extern public static int lua_toboolean(IntPtr L, int idx);
+        /// <summary>
+        /// 把栈中指定索引处的值转换为 *lua_CFunction* . 非C函数返回 _null_   
+        /// [-0, +0, -]
+        /// </summary>
         [DllImport("lua")] extern public static lua_CFunction lua_tocfunction(IntPtr L, int idx);
-
+        /// <summary>
+        /// 等阶于 `lua_tointegerx()` 的 _isnum_ 为 _null_   
+        /// [-0, +0, -]
+        /// </summary>        
         public static long lua_tointeger(IntPtr L, int idx)
         {
             int pisnum = 0;
             return lua_tointegerx(L, idx, ref pisnum);
         }
-
+        /// <summary>
+        /// 把栈中指定索引处的值转换为 *lua_Integer* . 非数值或可转换为数值的字符串返回 _0_   
+        /// 如果 _isnum_ 非 _null_ 标记转换是否成功   
+        /// [-0, +0, -]
+        /// </summary>
         [DllImport("lua")] extern public static long lua_tointegerx(IntPtr L, int idx, /* int* */ref int pisnum); // lua_Integer
-        [DllImport("lua")] extern public static IntPtr lua_tolstring(IntPtr L, int idx, /* size_t* */ref ulong len); // const char*
-
-        public static double lua_tonumber(IntPtr L, int idx)
-        {
-            int pisnum = 0;
-            return lua_tonumberx(L, idx, ref pisnum);
-        }
-
-        [DllImport("lua")] extern public static double lua_tonumberx(IntPtr L, int idx, /* int* */ref int pisnum); // lua_Number
-        [DllImport("lua")] extern public static IntPtr lua_topointer(IntPtr L, int idx); // const void*
-
+        /// <summary>
+        /// 等阶于 `lua_tolstring()` 的 _len_ 为 _null_   
+        /// [-0, +0, m]
+        /// </summary>
         public static IntPtr lua_tostring(IntPtr L, int idx) // const char*
         {
             ulong len = 0;
             return lua_tolstring(L, idx, ref len);
         }
-
+        /// <summary>
+        /// 把栈中指定索引处的值转换为C字符串, 非字符串或数值返回 _null_, 如果是数值则连同栈中的值也一并转换成字符串   
+        /// 返回的字符串以 `\0` 结尾, 但字符串中间也可以存在 `\0`   
+        /// 如果 _len_ 非 _null_ 标记字符串长度   
+        /// [-0, +0, m]
+        /// </summary>
+        [DllImport("lua")] extern public static IntPtr lua_tolstring(IntPtr L, int idx, /* size_t* */ref ulong len); // const char*
+        /// <summary>
+        /// 等阶于 `lua_tonumberx()` 的 _isnum_ 为 _null_
+        /// [-0, +0, -]
+        /// </summary>
+        public static double lua_tonumber(IntPtr L, int idx)
+        {
+            int pisnum = 0;
+            return lua_tonumberx(L, idx, ref pisnum);
+        }
+        /// <summary>
+        /// 把栈中指定索引处的值转换为 *lua_Number* . 非数值或可转换为数值的字符串返回 _0_
+        /// 如果 _isnum_ 非 _null_ 标记转换是否成功
+        /// [-0, +0, -]
+        /// </summary>
+        [DllImport("lua")] extern public static double lua_tonumberx(IntPtr L, int idx, /* int* */ref int pisnum); // lua_Number
+        /// <summary>
+        /// 把栈中指定索引处的值转换为通用C指针, 非 _userdata_ _table_ _thread_ _function_ 返回 _null_   
+        /// [-0, +0, -]
+        /// </summary>
+        [DllImport("lua")] extern public static IntPtr lua_topointer(IntPtr L, int idx); // const void*
+        /// <summary>
+        /// 把栈中指定索引处的值转换为Lua线程, 非 _thread_ 返回 _null_   
+        /// [-0, +0, -]
+        /// </summary>
         [DllImport("lua")] extern public static IntPtr lua_tothread(IntPtr L, int idx); // lua_State*
+        /// <summary>
+        /// 如果栈中指定索引处的值为 _full userdata_ 返回 _block address_   
+        /// 如果栈中指定索引处的值为 _light userdata_ 返回 _pointer_   
+        /// 否则返回 _null_  
+        /// [-0, +0, -]
+        /// </summary>
         [DllImport("lua")] extern public static IntPtr lua_touserdata(IntPtr L, int idx); // void*
+        /// <summary>
+        /// 返回指定索引处的数值类型   
+        /// 无效值返回:   
+        /// **LUA_TNONE**   
+        /// 有效值返回   
+        /// **LUA_TNIL**   
+        /// **LUA_TNUMBER**   
+        /// **LUA_TBOOLEAN**   
+        /// **LUA_TSTRING**   
+        /// **LUA_TTABLE**   
+        /// **LUA_TFUNCTION**   
+        /// **LUA_TUSERDATA**   
+        /// **LUA_TTHREAD**   
+        /// **LUA_TLIGHTUSERDATA**
+        /// </summary>
         [DllImport("lua")] extern public static int lua_type(IntPtr L, int idx);
+        /// <summary>
+        /// 返回数值类型的名称   
+        /// [-0, +0, -]
+        /// </summary>
         [DllImport("lua")] extern public static IntPtr lua_typename(IntPtr L, int t);
         [DllImport("lua")] extern public static IntPtr lua_upvalueid(IntPtr L, int fidx, int n); // void*
         // TODO lua_upvalueindex
@@ -348,6 +437,10 @@ namespace hostcs
 
         // TODO luaL_checkversion
 
+        /// <summary>
+        /// 加载并运行指定lua脚本文件, 返回0=正常, 1=错误码   
+        /// [-0, +?, e]
+        /// </summary>
         public static int luaL_dofile(IntPtr L, /* const char* */string filename)
         {
             if (0 != luaL_loadfile(L, filename) || 0 != Lua.lua_pcall(L, 0, Lua.LUA_MULTRET, 0))
@@ -357,6 +450,10 @@ namespace hostcs
             return 0;
         }
 
+        /// <summary>
+        /// 加载并运行指定lua脚本字符串, 返回0=正常, 1=错误码   
+        /// [-0, +?, -]
+        /// </summary>
         public static int luaL_dostring(IntPtr L, /* const char* */string s)
         {
             if (0 != luaL_loadstring(L, s) || 0 != Lua.lua_pcall(L, 0, Lua.LUA_MULTRET, 0))
@@ -376,6 +473,10 @@ namespace hostcs
         [DllImport("lua")] extern public static IntPtr luaL_gsub(IntPtr L, /* const char* */string s, /* const char* */string p, /* const char* */string r); // const char*
         [DllImport("lua")] extern public static long luaL_len(IntPtr L, int idx); // lua_Integer
 
+        /// <summary>
+        /// 等阶于 `luaL_loadbufferx()` 的 _mode_ 为 _null_   
+        /// [-0, +1, -]
+        /// </summary>
         public static int luaL_loadbuffer(IntPtr L, /* const char* */string buff, /* size_t */ulong size, /* const char* */string name)
         {
             return luaL_loadbufferx(L, buff, size, name, null);
@@ -393,7 +494,15 @@ namespace hostcs
         // TODO luaL_newlib
         // TODO luaL_newlibtable
         [DllImport("lua")] extern public static int luaL_newmetatable(IntPtr L, /* const char* */string tname);
+        /// <summary>
+        /// 新创建Lua虚拟机   
+        /// [-0, +0, -]
+        /// </summary>
         [DllImport("lua")] extern public static IntPtr luaL_newstate(); // lua_State*
+        /// <summary>
+        /// 打开标准库   
+        /// [-0, +0, -]
+        /// </summary>
         [DllImport("lua")] extern public static void luaL_openlibs(IntPtr L);
         // TODO luaL_opt
         [DllImport("lua")] extern public static long luaL_optinteger(IntPtr L, int arg, /* lua_Integer */long def); // lua_Integer
